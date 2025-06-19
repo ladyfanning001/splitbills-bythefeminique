@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Sparkle, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +15,7 @@ interface Transaction {
   description: string;
   amount: number;
   timestamp: Date;
+  paid: boolean;
 }
 
 const Index = () => {
@@ -41,6 +43,7 @@ const Index = () => {
       description,
       amount: parseFloat(amount),
       timestamp: new Date(),
+      paid: false,
     };
 
     setTransactions([newTransaction, ...transactions]);
@@ -57,6 +60,14 @@ const Index = () => {
     });
   };
 
+  const handlePaidToggle = (transactionId: number) => {
+    setTransactions(transactions.map(transaction => 
+      transaction.id === transactionId 
+        ? { ...transaction, paid: !transaction.paid }
+        : transaction
+    ));
+  };
+
   const getOweMessage = (transaction: Transaction) => {
     const otherPerson = transaction.payer === "Yasmin" ? "Ladya" : "Yasmin";
     const splitAmount = (transaction.amount / 2).toFixed(2);
@@ -66,11 +77,13 @@ const Index = () => {
   const getTotalBalance = () => {
     let yasminBalance = 0;
     transactions.forEach(transaction => {
-      const splitAmount = transaction.amount / 2;
-      if (transaction.payer === "Yasmin") {
-        yasminBalance += splitAmount;
-      } else {
-        yasminBalance -= splitAmount;
+      if (!transaction.paid) {
+        const splitAmount = transaction.amount / 2;
+        if (transaction.payer === "Yasmin") {
+          yasminBalance += splitAmount;
+        } else {
+          yasminBalance -= splitAmount;
+        }
       }
     });
     return yasminBalance;
@@ -193,7 +206,9 @@ const Index = () => {
               {transactions.map((transaction, index) => (
                 <Card
                   key={transaction.id}
-                  className="backdrop-blur-sm bg-white/70 border-0 shadow-lg rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 animate-fade-in"
+                  className={`backdrop-blur-sm border-0 shadow-lg rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 animate-fade-in ${
+                    transaction.paid ? 'bg-green-50/70' : 'bg-white/70'
+                  }`}
                   style={{
                     animationDelay: `${index * 100}ms`,
                   }}
@@ -201,7 +216,7 @@ const Index = () => {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-800 text-lg">
+                        <h3 className={`font-semibold text-lg ${transaction.paid ? 'text-green-800 line-through' : 'text-gray-800'}`}>
                           {transaction.description}
                         </h3>
                         <p className="text-sm text-gray-600 mt-1">
@@ -216,12 +231,27 @@ const Index = () => {
                       </div>
                     </div>
                     
-                    <div className={`p-3 rounded-xl text-sm font-medium ${
+                    <div className={`p-3 rounded-xl text-sm font-medium mb-3 ${
                       transaction.payer === "Yasmin" 
                         ? "bg-purple-100 text-purple-700" 
                         : "bg-pink-100 text-pink-700"
-                    }`}>
-                      {getOweMessage(transaction)}
+                    } ${transaction.paid ? 'opacity-50' : ''}`}>
+                      {transaction.paid ? "✅ Settled!" : getOweMessage(transaction)}
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`paid-${transaction.id}`}
+                        checked={transaction.paid}
+                        onCheckedChange={() => handlePaidToggle(transaction.id)}
+                        className="border-2 border-pink-300 data-[state=checked]:bg-pink-400 data-[state=checked]:border-pink-400"
+                      />
+                      <Label 
+                        htmlFor={`paid-${transaction.id}`} 
+                        className="text-sm font-medium text-gray-700 cursor-pointer"
+                      >
+                        Mark as paid 💰
+                      </Label>
                     </div>
                   </CardContent>
                 </Card>
