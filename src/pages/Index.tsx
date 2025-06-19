@@ -50,15 +50,41 @@ const Index = () => {
     setDescription("");
     setAmount("");
 
+    const splitAmount = (parseFloat(amount) / 2).toFixed(2);
     toast({
       title: "Transaction added! ✨",
-      description: `${payer} paid $${amount} for ${description}`,
+      description: `${payer} paid $${amount} - Split: $${splitAmount} each`,
     });
   };
 
   const getOweMessage = (transaction: Transaction) => {
     const otherPerson = transaction.payer === "Yasmin" ? "Ladya" : "Yasmin";
-    return `${otherPerson} owes ${transaction.payer} $${transaction.amount.toFixed(2)} 💸`;
+    const splitAmount = (transaction.amount / 2).toFixed(2);
+    return `${otherPerson} owes ${transaction.payer} $${splitAmount} 💸`;
+  };
+
+  const getTotalBalance = () => {
+    let yasminBalance = 0;
+    transactions.forEach(transaction => {
+      const splitAmount = transaction.amount / 2;
+      if (transaction.payer === "Yasmin") {
+        yasminBalance += splitAmount;
+      } else {
+        yasminBalance -= splitAmount;
+      }
+    });
+    return yasminBalance;
+  };
+
+  const getBalanceMessage = () => {
+    const balance = getTotalBalance();
+    if (Math.abs(balance) < 0.01) {
+      return "You're all settled up! 🎉";
+    } else if (balance > 0) {
+      return `Ladya owes Yasmin $${Math.abs(balance).toFixed(2)} total 💰`;
+    } else {
+      return `Yasmin owes Ladya $${Math.abs(balance).toFixed(2)} total 💰`;
+    }
   };
 
   return (
@@ -73,6 +99,18 @@ const Index = () => {
             For Yasmin & Ladya 💕
           </p>
         </div>
+
+        {/* Balance Summary */}
+        {transactions.length > 0 && (
+          <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl rounded-3xl overflow-hidden">
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">💝</div>
+              <p className="text-lg font-semibold text-gray-800">
+                {getBalanceMessage()}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Add Transaction Form */}
         <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl rounded-3xl overflow-hidden animate-scale-in">
@@ -161,13 +199,16 @@ const Index = () => {
                   }}
                 >
                   <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-800 text-lg">
                           {transaction.description}
                         </h3>
                         <p className="text-sm text-gray-600 mt-1">
                           Paid by {transaction.payer} • ${transaction.amount.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Split: ${(transaction.amount / 2).toFixed(2)} each
                         </p>
                       </div>
                       <div className="text-2xl">
